@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- DEĞİŞTİ: Sayfa başlığı geri getirildi -->
+    <title>Soda Counter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #e6e6fa; padding: 40px 20px; }
+        h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            /* DEĞİŞTİ: İkonlu başlığı ortalamak için eklendi */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        h2, h3 { text-align: center; color: #444; }
+        .container { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .panel { background: rgba(255, 255, 255, 0.45); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 16px; padding: 25px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); backdrop-filter: blur(12px); animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+        .panel-left { flex: 1.2; min-width: 300px; animation-delay: 0.1s; }
+        .panel-middle { flex: 2; min-width: 400px; animation-delay: 0.2s; }
+        .panel-right { flex: 1.5; min-width: 320px; animation-delay: 0.3s; }
+        input, select, button { width: 100%; padding: 12px; font-size: 14px; border-radius: 8px; border: 1px solid rgba(204, 204, 204, 0.5); box-sizing: border-box; background: rgba(255, 255, 255, 0.8); }
+        form button { margin-top: 15px; }
+        button { cursor: pointer; color: white; font-weight: 600; border: none; transition: all 0.3s ease; }
+        
+        .list-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .list-item span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 10px;
+        }
+        .list-item .btn-delete {
+            background: transparent;
+            border: none;
+            color: #555;
+            font-size: 22px;
+            padding: 0 5px;
+        }
+
+        .list-item .btn-delete:hover { animation: wiggle 0.5s ease-in-out; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        td strong { font-weight: 700; }
+        .action-container { margin-top: 20px; }
+        .counter { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
+        .counter .btn-counter { width: 40px; height: 40px; font-size: 22px; background: linear-gradient(45deg, #3498db, #2980b9); border-radius: 50%; display: flex; justify-content: center; align-items: center; padding: 0; }
+        .counter span { font-size: 1.6em; font-weight: 700; }
+        .action-buttons { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; margin-left: 10px; }
+        .btn-green { background: linear-gradient(45deg, #2ecc71, #27ae60); }
+        .btn-red { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+    </style>
+</head>
+<body>
+    <!-- DEĞİŞTİ: Başlık geri getirildi -->
+    <h1>🥤 Soda Counter</h1>
+    <div class="container">
+        <div class="panel panel-left">
+            <h3>Kişi Yönetimi</h3>
+            <form id="add-person-form">
+                <input type="text" id="new-person-name" placeholder="Yeni Kişi Adı" required>
+                <button type="submit" class="btn-green">Kişi Ekle</button>
+            </form>
+            <div id="person-list" style="margin-top: 20px;"></div>
+            <hr style="margin: 30px 0;">
+            <h3>Katkı Payı Türü Yönetimi</h3>
+            <form id="add-type-form">
+                <input type="text" id="new-type-name" placeholder="Yeni Tür Adı (Örn: Simit)" required>
+                <button type="submit" class="btn-green">Tür Ekle</button>
+            </form>
+            <div id="type-list" style="margin-top: 20px;"></div>
+        </div>
+        <div class="panel panel-middle">
+            <h2>Katkı Payı Listesi</h2>
+            <table id="summary-table">
+                <thead><tr><th>Kişi</th><th>Katkı Payları</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="panel panel-right">
+            <h2>Katkı Payı Ekle ve Öde</h2>
+            <select id="action-person-select"><option value="">Önce Kişi Seçin...</option></select>
+            <div class="action-container">
+                <select id="penalty-select"><option value="">Önce Tür Seçin...</option></select>
+                <div class="counter">
+                    <button id="decrease-btn" class="btn-counter">-</button>
+                    <span id="quantity">1</span>
+                    <button id="increase-btn" class="btn-counter">+</button>
+                    <div class="action-buttons">
+                        <button id="add-penalty-btn" class="btn-red">Ekle</button>
+                        <button id="pay-penalty-btn" class="btn-green">Öde</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    let allData = { users: {}, contribution_types: [] };
+    let actionQuantity = 1;
+
+    async function fetchData() {
+        const response = await fetch('/api/data');
+        allData = await response.json();
+        renderAllPanels();
+    }
+
+    function renderAllPanels() {
+        renderPersonList();
+        renderTypeList();
+        renderSummaryTable();
+        renderActionPanel();
+    }
+
+    function renderPersonList() {
+        const listDiv = document.getElementById('person-list');
+        listDiv.innerHTML = '';
+        Object.keys(allData.users || {}).sort().forEach(person => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `<span>${person}</span><button class="btn-delete">🗑️</button>`;
+            item.querySelector('button').onclick = () => deletePerson(person);
+            listDiv.appendChild(item);
+        });
+    }
+
+    function renderTypeList() {
+        const listDiv = document.getElementById('type-list');
+        listDiv.innerHTML = '';
+        (allData.contribution_types || []).sort().forEach(type => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `<span>${type}</span><button class="btn-delete">🗑️</button>`;
+            item.querySelector('button').onclick = () => deleteType(type);
+            listDiv.appendChild(item);
+        });
+    }
+
+    function renderSummaryTable() {
+        const tbody = document.querySelector('#summary-table tbody');
+        tbody.innerHTML = '';
+        Object.keys(allData.users || {}).sort().forEach(person => {
+            const penalties = allData.users[person];
+            const penaltyString = Object.entries(penalties).map(([p, c]) => `${p} <strong>x${c}</strong>`).join(' ');
+            const row = tbody.insertRow();
+            row.innerHTML = `<td>${person}</td><td>${penaltyString || '-'}</td>`;
+        });
+    }
+
+    function renderActionPanel() {
+        const personSelect = document.getElementById('action-person-select');
+        const penaltySelect = document.getElementById('penalty-select');
+        const currentPerson = personSelect.value;
+        const currentPenalty = penaltySelect.value;
+        
+        personSelect.innerHTML = '<option value="">Önce Kişi Seçin...</option>';
+        Object.keys(allData.users || {}).sort().forEach(person => personSelect.add(new Option(person, person)));
+        
+        penaltySelect.innerHTML = '<option value="">Önce Tür Seçin...</option>';
+        (allData.contribution_types || []).sort().forEach(type => penaltySelect.add(new Option(type, type)));
+        
+        personSelect.value = currentPerson;
+        penaltySelect.value = currentPenalty;
+        document.getElementById('quantity').textContent = actionQuantity;
+    }
+
+    async function apiRequest(endpoint, body) {
+        await fetch(endpoint, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        await fetchData();
+    }
+
+    function deletePerson(person) {
+        if (confirm(`'${person}' kişisini silmek istediğinizden emin misiniz?`)) {
+            apiRequest('/api/delete_person', { kisi: person });
+        }
+    }
+
+    function deleteType(type) {
+        if (confirm(`'${type}' türünü silmek istediğinizden emin misiniz?`)) {
+            apiRequest('/api/delete_type', { type_name: type });
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', fetchData);
+
+    document.getElementById('add-person-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const input = document.getElementById('new-person-name');
+        if (input.value.trim()) {
+            apiRequest('/api/add_person', { kisi: input.value.trim() });
+        }
+        input.value = '';
+    });
+    
+    document.getElementById('add-type-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const input = document.getElementById('new-type-name');
+        if (input.value.trim()) {
+            apiRequest('/api/add_type', { type_name: input.value.trim() });
+        }
+        input.value = '';
+    });
+
+    document.getElementById('decrease-btn').onclick = () => {
+        actionQuantity = Math.max(1, actionQuantity - 1);
+        renderActionPanel();
+    };
+
+    document.getElementById('increase-btn').onclick = () => {
+        actionQuantity++;
+        renderActionPanel();
+    };
+
+    document.getElementById('add-penalty-btn').onclick = () => {
+        const person = document.getElementById('action-person-select').value;
+        const penalty = document.getElementById('penalty-select').value;
+        if (!person || !penalty) {
+            alert('Kişi ve Katkı Payı Türü seçilmelidir!');
+            return;
+        }
+        apiRequest('/api/add_penalty', { kisi: person, icecek: penalty, quantity: actionQuantity });
+        actionQuantity = 1;
+    };
+
+    document.getElementById('pay-penalty-btn').onclick = () => {
+        const person = document.getElementById('action-person-select').value;
+        const penalty = document.getElementById('penalty-select').value;
+        if (!person || !penalty) {
+            alert('Kişi ve Katkı Payı Türü seçilmelidir!');
+            return;
+        }
+        apiRequest('/api/pay_penalty', { kisi: person, icecek: penalty, quantity: actionQuantity });
+        actionQuantity = 1;
+    };
+</script>
+</body>
+</html>
